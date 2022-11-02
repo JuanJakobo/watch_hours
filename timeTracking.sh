@@ -3,19 +3,18 @@
 
 #TODO compare last datetime with now, if time difference smaller 5 min, count on
 counter=0
-currentDate=$(date)
-echo "Start session " $currentDate
+echo "Start session"
 while true; do
+    currentDate=$(date +%d-%m-%Y,%H:%M)
     currentScreen=$(wmctrl -d | grep -m1 "*" | awk '{print $1}')
-    currentProgramms=$(wmctrl -lG | awk -v ref="$currentScreen" '$2==ref {for (i=8; i<NF; i++) printf $i "_"; print $NF " |";}')
-    uptime=$(uptime | awk -F , '{print $1}' | awk '{print $3 " " $4}')
-    echo $uptime "|" $currentProgramms
-    sleep 60
+    currentProgramms=$(wmctrl -lG | awk -v ref="$currentScreen" '$2==ref {print ","; for (i=8; i<NF; i++) printf $i "_"; print $NF;}')
+    echo $currentDate","$counter$currentProgramms
     if [[ $(( counter % 60 )) == 0 ]];
     then
-        notify-send "uptime: $uptime" "" -u normal -a 'Time'
+        notify-send "Screentime" "uptime: $counter min" -u normal -a 'Time'
     fi
     counter=$((counter+1))
+    sleep 60
 done
 
 echo "End session"
