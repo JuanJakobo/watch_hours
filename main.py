@@ -10,6 +10,7 @@ from notify import notification
 def main():
     #check if arguments are supplied
     path = ""
+    #TODO check if DB exists
     #open_db(path)
     if len(argv) >= 2:
         for arg in argv:
@@ -32,6 +33,7 @@ def open_database(path):
        focusedWindowClass VARCHAR(100) NOT NULL,
        focusedWindow VARCHAR(255) NOT NULL); """
     cursor.execute(table)
+    connection.close()
 
 def write_usage_to_db(path):
     try:
@@ -75,6 +77,7 @@ def draw_average_usage_per_day(path):
     day_names = ('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')
     for row in rows:
         print(f"{day_names[int(row[0])-1]:<9} {row[1]:<3} min")
+    connection.close()
 
 def draw_program_usage(path):
     #select where program is
@@ -88,6 +91,7 @@ def draw_program_usage(path):
         for i in range(row[1]):
             print("#",end="")
         print()
+    connection.close()
 
 def draw_usage_between_timeintervalls(path):
     #select where program is
@@ -108,12 +112,12 @@ def draw_todays_usage(path):
     cursor = connection.cursor()
     cursor.execute("SELECT strftime('%H',date) as time,Count(*) FROM usage WHERE Date >= DATE('now','localtime') GROUP BY time ORDER BY time ASC")
     rows = cursor.fetchall()
-
     for row in rows:
         print(f"{row[0]:<2} ({row[1]:<2} min) ",end="")
         for i in range(row[1]):
             print("#",end="")
         print()
+    connection.close()
 
 if __name__ == '__main__':
     main()
