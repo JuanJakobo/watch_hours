@@ -15,6 +15,12 @@ def main():
         for arg in argv:
             if arg == "-f":
                 write_usage_to_db(path)
+            elif arg == "-d":
+                draw_average_usage_per_day(path)
+            elif arg == "-p":
+                draw_program_usage(path)
+            elif arg == "-t":
+                draw_todays_usage(path)
 
 def open_database(path):
     connection = sqlite3.connect(path)
@@ -58,6 +64,56 @@ def write_usage_to_db(path):
             sys.exit(0)
         except SystemExit:
             os._exit(1)
+
+def draw_average_usage_per_day(path):
+    connection = sqlite3.connect(path)
+    cursor = connection.cursor()
+    #TODO avrg
+    cursor.execute("SELECT strftime('%w',Date) as day, Count(*) as time FROM usage GROUP BY day")
+    rows = cursor.fetchall()
+
+    day_names = ('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')
+    for row in rows:
+        print(f"{day_names[int(row[0])-1]:<9} {row[1]:<3} min")
+
+def draw_program_usage(path):
+    #select where program is
+    connection = sqlite3.connect(path)
+    cursor = connection.cursor()
+    cursor.execute("SELECT focusedWindowClass,Count(focusedWindowClass) as usage FROM usage GROUP BY focusedWindowClass ORDER BY usage DESC")
+    rows = cursor.fetchall()
+
+    for row in rows:
+        print(f"{row[0]:<20} ({row[1]:<3} min) ",end="")
+        for i in range(row[1]):
+            print("#",end="")
+        print()
+
+def draw_usage_between_timeintervalls(path):
+    #select where program is
+    #cursor.execute("SELECT time(Date), FocusedWindow FROM usage WHERE time(Date) > '19:50:00' and time(Date) < '19:52:00'")
+    connection = sqlite3.connect(path)
+    cursor = connection.cursor()
+    cursor.execute("SELECT strftime('%H',date) as time,Count(*) FROM usage WHERE date >= DATE('now','localtime') GROUP BY time ORDER BY time ASC")
+    rows = cursor.fetchall()
+
+    for row in rows:
+        print(f"{row[0]} ",end="")
+        for i in range(row[1]):
+            print("#",end="")
+        print()
+
+def draw_todays_usage(path):
+    connection = sqlite3.connect(path)
+    cursor = connection.cursor()
+    cursor.execute("SELECT strftime('%H',date) as time,Count(*) FROM usage WHERE Date >= DATE('now','localtime') GROUP BY time ORDER BY time ASC")
+    rows = cursor.fetchall()
+
+    for row in rows:
+        print(f"{row[0]:<2} ({row[1]:<2} min) ",end="")
+        for i in range(row[1]):
+            print("#",end="")
+        print()
 
 if __name__ == '__main__':
     main()
