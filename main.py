@@ -10,10 +10,22 @@ from notify import notification
 def main():
     #check if arguments are supplied
     path = ""
+    #open_db(path)
     if len(argv) >= 2:
         for arg in argv:
             if arg == "-f":
                 write_usage_to_db(path)
+
+def open_database(path):
+    connection = sqlite3.connect(path)
+    cursor = connection.cursor()
+    #test if db exists
+    cursor.execute("DROP TABLE IF EXISTS usage")
+    table = """ CREATE TABLE usage (
+       date TEXT NOT NULL,
+       focusedWindowClass VARCHAR(100) NOT NULL,
+       focusedWindow VARCHAR(255) NOT NULL); """
+    cursor.execute(table)
 
 def write_usage_to_db(path):
     try:
