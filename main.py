@@ -42,12 +42,11 @@ def create_database(path):
     """Opens the DB and creates a new table if not existend"""
     connection = sqlite3.connect(path)
     cursor = connection.cursor()
-    #TODO test if db exists
-    #cursor.execute("DROP TABLE IF EXISTS usage")
-    table = """ CREATE TABLE usage (
-       date TEXT NOT NULL,
-       focusedWindowClass VARCHAR(100) NOT NULL,
-       focusedWindow VARCHAR(255) NOT NULL); """
+    table = """ CREATE TABLE IF NOT EXISTS usage (
+       date INT PRIMARY KEY NOT NULL,
+       windowClassId INT NOT NULL,
+       focusedWindowName TEXT NOT NULL,
+       FOREIGN KEY(windowClassId) REFERENCES windowClasses(id)); """
     cursor.execute(table)
     connection.close()
 
