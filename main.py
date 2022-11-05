@@ -48,6 +48,68 @@ def create_database(path):
        focusedWindowName TEXT NOT NULL,
        FOREIGN KEY(windowClassId) REFERENCES windowClasses(id)); """
     cursor.execute(table)
+    table = """ CREATE TABLE IF NOT EXISTS windowClasses (
+       id INTEGER PRIMARY KEY NOT NULL,
+       name TEXT NOT NULL UNIQUE); """
+    cursor.execute(table)
+    connection.close()
+
+def insert_usage_into_db(path, window_name, window_class, verbose):
+    """inserts items into the DB"""
+    connection = sqlite3.connect(path)
+    cursor = connection.cursor()
+    cursor.execute("BEGIN TRANSACTION")
+    window_class_id = 0
+    try:
+        cursor.execute("INSERT INTO windowClasses ('name') VALUES (?)", (window_class,))
+        window_class_id = cursor.lastrowid
+    except sqlite3.IntegrityError:
+        if verbose:
+            print(f"Window_class '{window_class}' already exists.")
+        result = cursor.execute("SELECT id FROM windowClasses \
+                        WHERE name = ?", (window_class,))
+        for row in result:
+            window_class_id = row[0]
+    if window_class_id > 0:
+        item = (time.mktime(datetime.now().timetuple()), window_class_id, window_name)
+        cursor.execute("INSERT INTO USAGE VALUES (?,?,?)", item)
+    cursor.execute("COMMIT TRANSACTION")
+    if verbose:
+        print(f"Added {item}")
+    connection.commit()
+
+def write_usage_to_db(path, intervall, timer, verbose):
+    """Endless loop that tracks each minute which windows are open
+    and writes these values to an DB."""
+    seconds_passed = 0
+    while True:
+        #get current window
+        current_window = Window.get_active()
+        if current_window is not None:
+            window_class = current_window.wm_class
+            window_name = current_window.wm_name
+        else:
+            window_class = "Empty.Empty"
+            window_name = "Empty"
+        insert_usage_into_db(path, window_name, window_class, verbose)
+        #draw notification after timer
+        if seconds_passed % timer == 0:
+            notification('Screentime',message=f"uptime: {int(seconds_passed/60)} h",\
+                    app_name='usage')
+        if verbose:
+            print(f"Running since {seconds_passed} seconds")
+        seconds_passed += intervall
+        time.sleep(intervall)
+
+def draw_log(path, limit):
+    """Draws the last limit entries to the terminal"""
+    connection = sqlite3.connect(path)
+    cursor = connection.cursor()
+    rows = cursor.execute("SELECT datetime(date,'unixepoch'), wC.name, focusedWindowName \
+            FROM usage JOIN windowClasses as wC ON usage.windowClassId = wC.id \
+            ORDER BY date DESC LIMIT ?", (limit,))
+    for row in rows:
+        print(f"{row[0]} | {row[1]:<20} | {row[2]}")
     connection.close()
 
 def format_time(minutes):
@@ -58,108 +120,9 @@ def format_time(minutes):
         time_passed = str(minutes) + " min"
     return time_passed
 
-def write_usage_to_db(path):
-    """Endless loop that tracks each minute which windows are open
-    and writes these values to an DB."""
+if __name__ == '__main__':
     try:
-        connection = sqlite3.connect(path)
-        counter = 0
-        while True:
-            current_window = Window.get_active()
-            if current_window is not None:
-                window_class = current_window.wm_class
-                if window_class == "Alacritty.Alacritty":
-                    #TODO tmux window name
-                    window_name = "Code"
-                else:
-                    window_name = current_window.wm_name
-            else:
-                window_class = "Empty.Empty"
-                window_name = "Empty"
-            cursor = connection.cursor()
-            cursor.execute("INSERT INTO USAGE VALUES (?,?,?)",
-                           (datetime.now(), window_class, window_name))
-            connection.commit()
-            #TODO variable, print on verbose option
-            if counter % 60 == 0:
-                notification('Screentime',message=f"uptime: {int(counter/60)} h",app_name='usage')
-            time.sleep(60)
-            counter += 1
+        main()
     except KeyboardInterrupt:
         print('Closing')
-        connection.close()
         sys.exit(0)
-
-def draw_log(path):
-    """Draws the usage for the last 7 days to the terminal"""
-    connection = sqlite3.connect(path)
-    cursor = connection.cursor()
-    cursor.execute("SELECT * FROM usage ORDER BY date DESC LIMIT 10")
-    rows = cursor.fetchall()
-    for row in rows:
-        print(f"{row[0]} {row[1]}")
-    connection.close()
-
-
-def draw_average_usage_per_weekday(path):
-    """Draws the average usage per weekday to the terminal"""
-    connection = sqlite3.connect(path)
-    cursor = connection.cursor()
-    #TODO avrg
-    cursor.execute("SELECT strftime('%w',Date) as day, Count(*) as time FROM usage GROUP BY day")
-    rows = cursor.fetchall()
-
-    day_names = ('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')
-    for row in rows:
-        print(f"{day_names[int(row[0])-1]:<9} {row[1]:<3} min")
-    connection.close()
-
-def draw_program_usage(path):
-    """Draws the usage seperated per program to the terminal"""
-    #select where program is
-    connection = sqlite3.connect(path)
-    cursor = connection.cursor()
-    cursor.execute("SELECT focusedWindowClass, Count(focusedWindowClass) \
-            as usage FROM usage GROUP BY focusedWindowClass ORDER BY usage DESC")
-    rows = cursor.fetchall()
-
-    for row in rows:
-        print(f"{row[0]:<20} ({row[1]:<3} min) ",end="")
-        for _ in range(row[1]):
-            print("#",end="")
-        print()
-    connection.close()
-
-def draw_usage_between_timeintervalls(path):
-    """Draws the usage between certain timeintervalls to the terminal"""
-    #TODO implement
-    #cursor.execute("SELECT time(Date), FocusedWindow FROM
-    #usage WHERE time(Date) > '19:50:00' and time(Date) < '19:52:00'")
-    connection = sqlite3.connect(path)
-    cursor = connection.cursor()
-    cursor.execute("SELECT strftime('%H',date) as time,Count(*) FROM usage \
-                   WHERE date >= DATE('now','localtime') GROUP BY time ORDER BY time ASC")
-    rows = cursor.fetchall()
-
-    for row in rows:
-        print(f"{row[0]} ",end="")
-        for _ in range(row[1]):
-            print("#",end="")
-        print()
-
-def draw_todays_usage(path):
-    """Draws the usage for today grouped by hour to the terminal"""
-    connection = sqlite3.connect(path)
-    cursor = connection.cursor()
-    cursor.execute("SELECT strftime('%H',date) as time,Count(*) FROM usage \
-            WHERE Date >= DATE('now','localtime') GROUP BY time ORDER BY time ASC")
-    rows = cursor.fetchall()
-    for row in rows:
-        print(f"{row[0]:<2} ({row[1]:<2} min) ",end="")
-        for _ in range(row[1]):
-            print("#",end="")
-        print()
-    connection.close()
-
-if __name__ == '__main__':
-    main()
