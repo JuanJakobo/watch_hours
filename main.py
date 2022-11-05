@@ -120,6 +120,114 @@ def format_time(minutes):
         time_passed = str(minutes) + " min"
     return time_passed
 
+#TODO put together
+def draw_usage(path, start_time, end_time, order_by, calculation_type):
+    """Draws the usage for the last 7 days to the terminal"""
+    connection = sqlite3.connect(path)
+    cursor = connection.cursor()
+    cursor.execute("SELECT strftime('%Y-%m-%d',date) AS time, COUNT(*) FROM usage \
+            WHERE Date >= DATE('now','localtime','weekday 0','-6 days') \
+            GROUP BY time ORDER BY time ASC")
+    rows = cursor.fetchall()
+    for row in rows:
+        print(f"{row[0]:<2} {format_time(row[1]):<3}")
+    connection.close()
+
+def draw_average_usage_per_weekday(path):
+    """Draws the average usage per weekday to the terminal"""
+    connection = sqlite3.connect(path)
+    cursor = connection.cursor()
+    #TODO avrg
+    cursor.execute("SELECT strftime('%w',Date) AS day, COUNT(*) AS time FROM usage GROUP BY day")
+    rows = cursor.fetchall()
+
+    day_names = ('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')
+    for row in rows:
+        print(f"{day_names[int(row[0])-1]:<9} {format_time(row[1]):<3}")
+    connection.close()
+
+def draw_program_usage(path):
+    """Draws the usage seperated per program to the terminal"""
+    #TODO select range
+    connection = sqlite3.connect(path)
+    cursor = connection.cursor()
+    cursor.execute("SELECT focusedWindowClass, Count(focusedWindowClass) \
+            AS usage FROM usage GROUP BY focusedWindowClass ORDER BY usage DESC")
+    rows = cursor.fetchall()
+
+    for row in rows:
+        print(f"{row[0]:<25} {format_time(row[1]):<3}")
+    connection.close()
+
+def draw_usage_between_timeintervalls(path):
+    """Draws the usage between certain timeintervalls to the terminal"""
+    #TODO implement
+    #cursor.execute("SELECT time(Date), FocusedWindow FROM
+    #usage WHERE time(Date) > '19:50:00' and time(Date) < '19:52:00'")
+    connection = sqlite3.connect(path)
+    cursor = connection.cursor()
+    cursor.execute("SELECT strftime('%H',date) AS time, COUNT(*) FROM usage \
+                   WHERE date >= DATE('now','localtime') GROUP BY time \
+                   ORDER BY time ASC")
+    rows = cursor.fetchall()
+
+    for row in rows:
+        print(f"{row[0]:<2} {format_time(row[1]):<3}")
+
+def draw_todays_usage(path):
+    """Draws the usage for today grouped by hour to the terminal"""
+    connection = sqlite3.connect(path)
+    cursor = connection.cursor()
+    cursor.execute("SELECT strftime('%H',date) AS time, COUNT(*) FROM usage \
+            WHERE Date >= DATE('now','localtime') GROUP BY time \
+            ORDER BY time ASC")
+    rows = cursor.fetchall()
+    for row in rows:
+        print(f"{row[0]:<2} ({row[1]:<2} min) ",end="")
+        for _ in range(row[1]):
+            print("#",end="")
+        print()
+    connection.close()
+
+def draw_last_seven_days_usage(path):
+    """Draws the usage for the last 7 days to the terminal"""
+    connection = sqlite3.connect(path)
+    cursor = connection.cursor()
+    cursor.execute("SELECT strftime('%Y-%m-%d',date) AS time, COUNT(*) FROM usage \
+            WHERE Date >= DATE('now','localtime','weekday 0','-6 days') \
+            GROUP BY time ORDER BY time ASC")
+    rows = cursor.fetchall()
+    for row in rows:
+        print(f"{row[0]:<2} {format_time(row[1]):<3}")
+    connection.close()
+
+def draw_detailed_program_usage(path):
+    """Draws the detailed usage of a certain program to the terminal"""
+    #select where program is
+    connection = sqlite3.connect(path)
+    cursor = connection.cursor()
+    window_class_name = "%firefox%"
+            #cursor.execute("INSERT INTO USAGE VALUES (?,?,?)",
+            #               (datetime.now(), window_class, window_name))
+    cursor.execute("SELECT focusedWindow, COUNT(focusedWindow) \
+            AS usage FROM usage WHERE focusedWindowClass LIKE ? \
+            GROUP BY focusedWindow ORDER BY usage ASC", (window_class_name,))
+    rows = cursor.fetchall()
+
+    #seperator is - or | or page name is at beginning
+    for row in rows:
+        test = row[0].split('—')[0] #.split()[-1]
+        if '|' in test:
+            test = test.split('|')[-1].strip()
+        if '-' in test:
+            test = test.split('-')[-1].strip()
+
+        print(f"{test:<50} {format_time(row[1]):<3}")
+        #if row[1] > 1:
+            #print(f"{row[0].split('—')[0]:<50} ({row[1]:<3} min) ",end="")
+            #print()
+    connection.close()
+
 if __name__ == '__main__':
     try:
         main()
