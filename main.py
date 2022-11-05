@@ -1,38 +1,44 @@
 """
 Tracks how the user uses the system, stores the value in an DB.
 The values can be analyized using this program also.
-"""
 
+Usage:
+  usage.py write <path> [--intervall=<num>] [--timer=<num>] [--verbose]
+  usage.py log <path> [--size=<num>]
+  usage.py (-h | --help)
+  usage.py --version
+
+Options:
+  -h --help     Show this screen.
+  --version     Show version.
+  <path>        Location of the DB
+  write
+    --timer=<num>  Timer after that a notification is drawn in seconds [default: 3600].
+    --intervall=<num>  Intervall after that an log entry is written in seconds [default: 60].
+  log
+    --size=<num>  Count of entries [default: 10].
+"""
 from datetime import datetime
 import sqlite3
 import sys
-from sys import argv
 import time
+from docopt import docopt
 from notify import notification
 from wmctrl import Window
 
 def main():
     """Handles the user input and calls function accordingly"""
-    #TODO check if arguments are supplied
-    #TODO get path
-    path = ""
-    #TODO check if DB exists
-    #open_db(path)
-    if len(argv) >= 2:
-        for arg in argv:
-            if arg == "-f":
-                write_usage_to_db(path)
-            elif arg == "-d":
-                draw_average_usage_per_weekday(path)
-            elif arg == "-p":
-                draw_program_usage(path)
-            elif arg == "-t":
-                draw_todays_usage(path)
-    else:
-        #TODO mention options
-        print("Please select an option")
+    arguments = docopt(__doc__, version='Usage 0.1')
 
-def open_database(path):
+    create_database(arguments['<path>'])
+
+    if arguments['log']:
+        draw_log(arguments['<path>'], arguments['--size'])
+    elif arguments['write']:
+        write_usage_to_db(path=arguments['<path>'], intervall=int(arguments['--intervall']), \
+                          timer=int(arguments['--timer']), verbose=arguments['--verbose'])
+
+def create_database(path):
     """Opens the DB and creates a new table if not existend"""
     connection = sqlite3.connect(path)
     cursor = connection.cursor()
