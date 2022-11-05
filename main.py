@@ -45,6 +45,14 @@ def open_database(path):
     cursor.execute(table)
     connection.close()
 
+def format_time(minutes):
+    """Formats the input as a string and if is bigger 60 divives into hours"""
+    if minutes >= 60:
+        time_passed = str(int(minutes / 60)) + "h " + str(minutes % 60) + "min"
+    else:
+        time_passed = str(minutes) + " min"
+    return time_passed
+
 def write_usage_to_db(path):
     """Endless loop that tracks each minute which windows are open
     and writes these values to an DB."""
@@ -67,15 +75,26 @@ def write_usage_to_db(path):
             cursor.execute("INSERT INTO USAGE VALUES (?,?,?)",
                            (datetime.now(), window_class, window_name))
             connection.commit()
-            counter += counter
+            #TODO variable, print on verbose option
             if counter % 60 == 0:
-                notification('Screentime',message=f"uptime: {counter/60} h",app_name='usage')
+                notification('Screentime',message=f"uptime: {int(counter/60)} h",app_name='usage')
             time.sleep(60)
-            counter =+ 1
+            counter += 1
     except KeyboardInterrupt:
         print('Closing')
         connection.close()
         sys.exit(0)
+
+def draw_log(path):
+    """Draws the usage for the last 7 days to the terminal"""
+    connection = sqlite3.connect(path)
+    cursor = connection.cursor()
+    cursor.execute("SELECT * FROM usage ORDER BY date DESC LIMIT 10")
+    rows = cursor.fetchall()
+    for row in rows:
+        print(f"{row[0]} {row[1]}")
+    connection.close()
+
 
 def draw_average_usage_per_weekday(path):
     """Draws the average usage per weekday to the terminal"""
