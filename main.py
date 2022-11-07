@@ -132,8 +132,10 @@ def write_usage_to_db(path, timer, verbose):
         #draw notification after timer
         if seconds_passed % timer == 0:
             total_usage = draw_total_daily_usage(path)
-            notification('Screentime',message=f"uptime: {int(seconds_passed/timer)} h \nTotal daily uptime: {total_usage}",\
-                    app_name='usage')
+            notification('Screentime',\
+                    message= \
+                    f"uptime: {int(seconds_passed/timer)} h \nTotal daily uptime: {total_usage}",\
+                    timeout=4000, app_name='usage')
         if verbose:
             print(f"Running since {seconds_passed} seconds")
         seconds_passed += 60
@@ -155,7 +157,8 @@ def draw_average_usage_per_weekday(path):
     connection = sqlite3.connect(path)
     cursor = connection.cursor()
     #TODO avrg
-    rows = cursor.execute("SELECT STRFTIME('%w',date,'unixepoch') AS day, COUNT(*) AS time FROM usage GROUP BY day")
+    rows = cursor.execute("SELECT STRFTIME('%w',date,'unixepoch') AS day, COUNT(*) AS time \
+            FROM usage GROUP BY day")
 
     day_names = ('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')
     for row in rows:
