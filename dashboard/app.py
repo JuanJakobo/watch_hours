@@ -38,6 +38,27 @@ def index():
     title = "Usage of last days"
     return render_template('chartLastDays.html', values=values, labels=labels, legend=legend, title=title, days=days)
 
+@app.route("/usagePerHour")
+def draw_usage_per_hour():
+    """Draws the usage for today grouped by hour"""
+    day = request.args.get("day")
+    if day is None:
+        day = date.today()
+    connection = openDB()
+    cursor = connection.cursor()
+    rows = cursor.execute("SELECT strftime('%H',date,'unixepoch','localtime') AS time, COUNT(*) \
+            FROM usage WHERE DATE(date,'unixepoch','localtime') IS ? GROUP BY time \
+            ORDER BY time ASC", (day,))
+    labels = []
+    values = []
+    for row in rows:
+        labels.append(f"{row[0]}:00 h")
+        values.append(row[1])
+    connection.close()
+    legend = "Usage per hour"
+    title = "Usage per hour on certain day"
+    return render_template('chartUsagePerHour.html', values=values, labels=labels, legend=legend, title=title, day=day)
+
 @app.route("/log")
 def draw_log():
     """Draws the last "limit" entries"""

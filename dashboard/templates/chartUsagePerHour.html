@@ -1,0 +1,33 @@
+{% extends "layout.html" %}
+
+{% block body %}
+<form action="/usagePerHour">
+    <input required name="day" value={{day}} type="date">
+    <input type="submit">
+</form>
+<div class="wrapper">
+    <canvas id="myChart"></canvas>
+</div>
+<script>
+    const ctx = document.getElementById("myChart");
+
+    var myChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: [{% for item in labels %}
+                "{{item}}",
+                {% endfor %}],
+            datasets: [{
+                label: '{{ legend }}',
+                data: [{% for item in values %}
+                    {{item}},
+                    {% endfor %}],
+            }],
+        },
+    options: {
+        responsive:true,
+        indexAxis: 'y',
+    }
+    });
+</script>
+{% endblock %}
