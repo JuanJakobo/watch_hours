@@ -1,32 +1,33 @@
 {% extends "layout.html" %}
 
 {% block body %}
-        <h1>Usage of last days</h1>
-        <form action="/">
-            <input required min="0" name="days" placeholder={{days}} type="number">
-            <input type="submit">
-        </form>
-        <canvas id="myChart" width="800" height="400"></canvas>
-       <script>
-          var chartData = {
-            labels : [{% for item in labels %}
-                       "{{item}}",
-                      {% endfor %}],
-            datasets : [{
+<h1>Usage of last days</h1>
+<form action="/">
+    <input required min="0" name="days" placeholder={{days}} type="number">
+    <input type="submit">
+</form>
+<div class="wrapper">
+    <canvas id="myChart"></canvas>
+</div>
+<script>
+    const ctx = document.getElementById("myChart");
+
+    var myChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: [{% for item in labels %}
+                "{{item}}",
+                {% endfor %}],
+            datasets: [{
                 label: '{{ legend }}',
-                data : [{% for item in values %}
-                          {{item}},
-                        {% endfor %}],
-            }]
-          }
-
-          // get chart canvas
-          var ctx = document.getElementById("myChart").getContext("2d");
-
-          // create the chart using the chart canvas
-          var myChart = new Chart(ctx, {
-            type: 'bar',
-            data: chartData,
-          });
-       </script>
+                data: [{% for item in values %}
+                    {{item}},
+                    {% endfor %}],
+            }],
+        },
+    options: {
+        responsive:true,
+    }
+    });
+</script>
 {% endblock %}

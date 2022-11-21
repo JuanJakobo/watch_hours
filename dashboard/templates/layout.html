@@ -4,12 +4,16 @@
     <head>
         <meta charset="utf-8" />
         <title>Chart.js Example</title>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"> </script>
-       <script>
-          Chart.defaults.global.responsive = false;
-       </script>
+        <script src="static/chart.js"> </script>
+        <style>
+            .wrapper{
+                width: 800px;
+            }
+        </style>
     </head>
     <body>
+        <a href="/">Last days</a>|<a href="/dailyUsage">Daily Usage</a>|<a href="/programUsage">Program Usage</a>|<a
+            href="/perWeekday">per Weekday</a>|<a href="/detailedClassUsage">detailed Class Usage</a>
         {% block body %}{% endblock %}
     </body>
 </html>
