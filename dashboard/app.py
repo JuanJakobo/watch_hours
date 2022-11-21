@@ -34,8 +34,28 @@ def index():
         labels.append(row[0])
         values.append(row[1]/60)
     connection.close()
-    legend = 'Daily Usage'
-    return render_template('chart.html', values=values, labels=labels, legend=legend, days=days)
+    legend = "Daily Usage"
+    title = "Usage of last days"
+    return render_template('chartLastDays.html', values=values, labels=labels, legend=legend, title=title, days=days)
+
+@app.route("/log")
+def draw_log():
+    """Draws the last "limit" entries"""
+    limit = 200
+    connection = openDB()
+    cursor = connection.cursor()
+    rows = cursor.execute("SELECT DATETIME(date,'unixepoch','localtime'), wC.name, focusedWindowName \
+            FROM usage JOIN windowClasses as wC ON usage.windowClassId = wC.id \
+            ORDER BY date DESC LIMIT ?", (limit,))
+    values = []
+    for row in rows:
+        values.append(f"{row[0]} | {row[1]:<20} | {row[2]}")
+    connection.close()
+    title = "Log"
+    return render_template('log.html', values=values, title=title)
+
 
 if __name__ == "__main__":
+    with open('config.json') as config_file:
+        config_data = json.load(config_file)
     app.run(debug=True)
