@@ -99,6 +99,51 @@ def draw_average_usage_per_weekday():
     title = 'Avg. Usage per weekday'
     return render_template('chart.html', values=values, labels=labels, legend=legend, title=title)
 
+@app.route("/detailedClassUsage")
+def draw_detailed_class_usage():
+    """Draws the detailed usage of a certain program"""
+    #name of the window class
+    connection = openDB()
+    cursor = connection.cursor()
+
+    rows = cursor.execute("SELECT name from WindowClasses")
+    window_classes = []
+    for row in rows:
+        window_classes.append(row[0][row[0].find('.')+1:])
+
+    class_name = request.args.get("class_name")
+    if class_name is None:
+        class_name = "firefox"
+    detail = request.args.get("detail")
+    if detail is None:
+        detail = ""
+    window_class_name = "%" + class_name + "%"
+    rows = cursor.execute("SELECT focusedWindowName, COUNT(focusedWindowName) \
+            AS usage FROM usage JOIN windowClasses ON usage.windowClassId = windowClasses.id  WHERE windowClasses.name LIKE ? \
+            GROUP BY focusedWindowName ORDER BY usage DESC", (window_class_name,))
+
+    #TODO clean up
+    labels = []
+    values = []
+    sum = 0
+    for row in rows:
+        #test = row[0].split('—')[0] #.split()[-1]
+        #if '|' in test:
+        #    test = test.split('|')[-1].strip()
+        #if '-' in test:
+        #    test = test.split('-')[-1].strip()
+        if len(detail) == 0:
+            labels.append(row[0])
+            values.append(row[1])
+        elif row[0].find(detail) >= 0:
+            sum += row[1]
+    if not len(detail) == 0:
+        labels.append(detail)
+        values.append(sum)
+    connection.close()
+    legend = "Total Usage in min"
+    title = "Usage per Name"
+    return render_template('chartDetailedClassUsage.html', values=values, labels=labels, legend=legend, title=title, window_classes=window_classes, detail=detail, class_name=class_name)
 
 @app.route("/log")
 def draw_log():

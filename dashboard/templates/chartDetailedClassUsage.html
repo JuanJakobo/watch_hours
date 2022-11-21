@@ -1,0 +1,42 @@
+{% extends "layout.html" %}
+
+{% block body %}
+<form action="/detailedClassUsage">
+    <select name="class_name">
+              {% for item in window_classes %}
+              <option
+              {% if item == class_name %}
+                      selected="selected"
+              {% endif %}
+               value="{{ item }}">{{ item }}</option>
+              {% endfor %}
+    </select>
+    <input name="detail" value={% if detail %} {{ detail }} {% else %} "" {% endif %} type="text">
+    <input type="submit">
+</form>
+<div class="wrapper">
+    <canvas id="myChart"></canvas>
+</div>
+<script>
+    const ctx = document.getElementById("myChart");
+
+    var myChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: [{% for item in labels %}
+                "{{item}}",
+                {% endfor %}],
+            datasets: [{
+                label: '{{ legend }}',
+                data: [{% for item in values %}
+                    {{item}},
+                    {% endfor %}],
+            }],
+        },
+    options: {
+        responsive:true,
+        indexAxis: 'y',
+    }
+    });
+</script>
+{% endblock %}
