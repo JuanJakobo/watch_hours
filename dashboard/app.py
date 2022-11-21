@@ -59,6 +59,25 @@ def draw_usage_per_hour():
     title = "Usage per hour on certain day"
     return render_template('chartUsagePerHour.html', values=values, labels=labels, legend=legend, title=title, day=day)
 
+@app.route("/programUsage")
+def draw_program_usage():
+    """Draws the usage seperated per program"""
+    connection = openDB()
+    cursor = connection.cursor()
+    rows = cursor.execute("SELECT ws.name, Count(u.windowClassId) \
+            AS usage FROM usage AS u JOIN windowClasses AS ws ON u.windowClassId = ws.id \
+            GROUP BY u.windowClassId ORDER BY usage DESC")
+    #TODO use a SET or dictinoary
+    labels = []
+    values = []
+    for row in rows:
+        labels.append(row[0][row[0].find('.')+1:])
+        values.append(row[1]/60)
+    connection.close()
+    legend = 'Total Minutes'
+    title = 'Usage per Program'
+    return render_template('chart.html', values=values, labels=labels, legend=legend, title=title)
+
 @app.route("/log")
 def draw_log():
     """Draws the last "limit" entries"""
