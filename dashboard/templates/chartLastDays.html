@@ -1,6 +1,10 @@
 {% extends "layout.html" %}
 
 {% block body %}
+<form action="/">
+    <input required min="0" name="days" value={{days}} type="number">
+    <input type="submit">
+</form>
 <div class="wrapper">
     <canvas id="myChart"></canvas>
 </div>
