@@ -78,6 +78,28 @@ def draw_program_usage():
     title = 'Usage per Program'
     return render_template('chart.html', values=values, labels=labels, legend=legend, title=title)
 
+@app.route("/AvgPerWeekday")
+def draw_average_usage_per_weekday():
+    """Draws the average usage per weekday"""
+
+    connection = openDB()
+    cursor = connection.cursor()
+    #TODO avrg
+    rows = cursor.execute("SELECT STRFTIME('%w',date,'unixepoch') AS day, COUNT(*) AS time \
+            FROM usage GROUP BY day ORDER BY day DESC")
+
+    day_names = ('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')
+    labels = []
+    values = []
+    for row in rows:
+        labels.append(day_names[int(row[0])-1])
+        values.append(row[1]/60)
+    connection.close()
+    legend = 'Average Minutes'
+    title = 'Avg. Usage per weekday'
+    return render_template('chart.html', values=values, labels=labels, legend=legend, title=title)
+
+
 @app.route("/log")
 def draw_log():
     """Draws the last "limit" entries"""
