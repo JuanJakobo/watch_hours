@@ -3,7 +3,7 @@
 <html lang="en">
     <head>
         <meta charset="utf-8" />
-        <title>Chart.js Example</title>
+        <title>Computer Usage</title>
         <script src="static/chart.js"> </script>
         <style>
             .wrapper{
@@ -12,8 +12,8 @@
         </style>
     </head>
     <body>
-        <a href="/">Last days</a>|<a href="/dailyUsage">Daily Usage</a>|<a href="/programUsage">Program Usage</a>|<a
-            href="/perWeekday">per Weekday</a>|<a href="/detailedClassUsage">detailed Class Usage</a>
+        <a href="/">Last days</a>|<a href="/usagePerHour">Daily Usage</a>|<a href="/programUsage">Program Usage</a>|<a href="/AvgPerWeekday">Avg. per Weekday</a>|<a href="/detailedClassUsage">detailed Class Usage</a>|<a href="/log">Log</a>
+        <h1>{{ title }}</h1>
         {% block body %}{% endblock %}
     </body>
 </html>
