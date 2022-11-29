@@ -34,7 +34,7 @@ def index():
         labels.append(row[0])
         values.append(row[1]/60)
     connection.close()
-    legend = "Daily Usage"
+    legend = "Daily Usage in hours"
     title = "Usage of last days"
     return render_template('chartLastDays.html', values=values, labels=labels, legend=legend, title=title, days=days)
 
@@ -72,7 +72,7 @@ def draw_program_usage():
     values = []
     for row in rows:
         labels.append(row[0][row[0].find('.')+1:])
-        values.append(row[1]/60)
+        values.append(row[1])
     connection.close()
     legend = 'Total Minutes'
     title = 'Usage per Program'
@@ -85,8 +85,8 @@ def draw_average_usage_per_weekday():
     connection = openDB()
     cursor = connection.cursor()
     #TODO avrg
-    rows = cursor.execute("SELECT STRFTIME('%w',date,'unixepoch') AS day, COUNT(*) AS time \
-            FROM usage GROUP BY day ORDER BY day DESC")
+    rows = cursor.execute("SELECT STRFTIME('%w',day) AS weekday, AVG(time) from (SELECT DATE(date,'unixepoch') AS day, \
+                          COUNT(*) AS time FROM usage GROUP BY day) GROUP BY weekday")
 
     day_names = ('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')
     labels = []
@@ -95,7 +95,7 @@ def draw_average_usage_per_weekday():
         labels.append(day_names[int(row[0])-1])
         values.append(row[1]/60)
     connection.close()
-    legend = 'Average Minutes'
+    legend = 'Average Hours'
     title = 'Avg. Usage per weekday'
     return render_template('chart.html', values=values, labels=labels, legend=legend, title=title)
 
