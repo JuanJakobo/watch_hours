@@ -24,8 +24,8 @@ from datetime import datetime
 import sqlite3
 import sys
 import time
+import notify2
 from docopt import docopt
-from notify import notification
 from wmctrl import Window
 
 #TODO add tests
@@ -38,6 +38,7 @@ def main():
     if arguments['log']:
         draw_log(arguments['<path>'], arguments['--size'])
     elif arguments['write']:
+        notify2.init("watch_hours")
         write_usage_to_db(path=arguments['<path>'],\
                 timer=int(arguments['--timer']), verbose=arguments['--verbose'])
     elif arguments['print']:
@@ -106,6 +107,7 @@ def write_usage_to_db(path, timer, verbose):
     """Endless loop that tracks each minute which windows are open
     and writes these values to an DB."""
     seconds_passed = 0
+    print(f"Timer is set to {timer} seconds.")
     while True:
         #get current window
         current_window = Window.get_active()
@@ -119,12 +121,13 @@ def write_usage_to_db(path, timer, verbose):
         #draw notification after timer
         if seconds_passed % timer == 0:
             total_usage = draw_total_daily_usage(path)
-            notification('Screentime',\
-                    message= \
-                    f"uptime: {int(seconds_passed/timer)} h \nTotal daily uptime: {total_usage}",\
-                    timeout=4000, app_name='usage')
+            n = notify2.Notification("Screentime",
+                                     f"uptime: {int(seconds_passed/timer)} h \nTotal daily uptime: {total_usage}",
+                                     "")
+            n.timeout = 5000
+            n.show()
         if verbose:
-            print(f"Running since {seconds_passed} seconds")
+            print(f"Running since {seconds_passed} seconds.")
         seconds_passed += 60
         time.sleep(60)
 
